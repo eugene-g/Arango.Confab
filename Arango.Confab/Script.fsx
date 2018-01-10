@@ -5,16 +5,21 @@
 #load "Arango.Confab.fs"
 open Arango.Confab
 
-let subscriber = Subscriber (fun msg ->
-  printfn "%A, %A" msg.change msg.message
-)
+let printMessage(msg : Message): unit =
+  printfn "change: %A\ncname: %A\nmessage: %A" msg.change msg.cname msg.data
 
-let bus = Bus ()
+let insertSubscriber = {
+  change = InsertUpdate;
+  cname = Some "terminals";
+  fn = printMessage
+}
 
-let publisher = Publisher ("http://127.0.0.1:8529/_db/test", bus)
+let deleteSubscriber = {
+  change = Delete;
+  cname = None;
+  fn = printMessage
+}
 
-bus.Subscribe(InsertUpdate, subscriber)
+let bus = [insertSubscriber; deleteSubscriber]
 
-bus.Subscribe(Delete, subscriber)
-
-publisher.Start
+start("http://127.0.0.1:8529/_db/test", bus)
